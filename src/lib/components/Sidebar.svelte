@@ -2,6 +2,7 @@
   // 1. Import store page dari SvelteKit
   import { page } from '$app/stores';
   import {goto} from '$app/navigation';
+  import {PUBLIC_API_URL} from '$env/static/public';
 
   export let isOpen = false;
 
@@ -27,7 +28,7 @@
     if (token) {
       try {
         // Beritahu Laravel untuk menghapus token ini dari database (Biar aman dari hacker)
-        await fetch('http://localhost:8000/api/logout', {
+        await fetch(`${PUBLIC_API_URL}/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
