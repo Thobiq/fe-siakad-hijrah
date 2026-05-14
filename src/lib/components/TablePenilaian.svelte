@@ -31,7 +31,7 @@
     const id = activeItem.id;
 
     try {
-      const response = await fetch(`${PUBLIC_API_URL}/api/penilaian/${id}`, {
+      const response = await fetch(`${PUBLIC_API_URL}/penilaian/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       });
