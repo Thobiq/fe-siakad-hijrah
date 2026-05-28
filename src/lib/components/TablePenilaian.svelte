@@ -278,7 +278,7 @@
           nama: inputNama,
           no_induk: inputNoInduk,
           tahun_ajaran: inputTahun,
-          tingkat: tingkat // 👈 Menggunakan variabel tingkat
+          tingkat: tingkat 
         })
       });
 
@@ -297,6 +297,80 @@
       }
     } catch (error) {
       alert("Gagal menghubungi server.");
+    }
+  }
+
+  // --- LOGIKA MODAL EDIT PENILAIAN ---
+  let showEditModal = false;
+  let editId = null;
+  let editNama = "";
+  let editNoInduk = "";
+
+  let isEditing = false;
+
+  function openEditModal(item) {
+    editId = item.id;
+    editNama = item.nama;
+    editNoInduk = item.noInduk;
+    showEditModal = true;
+  }
+
+  function closeEditModal() {
+    showEditModal = false;
+    editId = null;
+    editNama = "";
+    editNoInduk = "";
+    let isEditing = false;
+  }
+
+  async function handleEditPenilaian() {
+    // let isEditing = false;
+
+    if (!editNama || !editNoInduk) {
+      alert("Nama dan Nomor Induk Siswa harus diisi!");
+      return;
+    }
+
+    isEditing = true;
+
+    const token = localStorage.getItem('auth_token');
+
+
+    try {
+      // Asumsi endpoint update Laravel menggunakan method PUT
+      const response = await fetch(`${PUBLIC_API_URL}/penilaian/${editId}`, {
+        method: 'PUT', 
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          nama: editNama,
+          no_induk: editNoInduk,
+          tahun_ajaran: selectedYear,
+          tingkat: tingkat 
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status) {
+        // Update data di tabel secara lokal tanpa perlu refresh halaman
+        data = data.map(row => {
+          if (row.id === editId) {
+            return { ...row, nama: editNama, noInduk: editNoInduk };
+          }
+          return row;
+        });
+        closeEditModal();
+      } else {
+        alert(result.message || "Gagal memperbarui database.");
+      }
+    } catch (error) {
+      alert("Gagal menghubungi server.");
+    } finally{
+      isEditing = true;
     }
   }
 </script>
@@ -357,6 +431,9 @@
               </td>
               <td class="px-6 py-4 text-right flex items-center justify-end gap-2">
                 <button class="px-4 py-2 rounded-lg font-semibold text-sm transition-colors {row.status === 'Selesai' ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-sm' : 'bg-gray-300 text-white cursor-not-allowed'}" on:click|stopPropagation={() => openDownloadModal(row)} disabled={row.status === 'Draft'}>Download</button>
+                <button class="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-sm transition-colors" on:click|stopPropagation={() => openEditModal(row)}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                </button>
                 <button class="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-sm transition-colors" on:click|stopPropagation={() => openDeleteModal(row)}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                 </button>
@@ -439,6 +516,47 @@
         <button class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors" on:click={() => showDeleteModal = false}>Batal</button>
         <button class="flex-1 py-3 px-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors shadow-sm" on:click={confirmDelete}>Ya, Hapus</button>
       </div>
+    </div>
+  </div>
+{/if}
+
+{#if showEditModal}
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" on:click={closeEditModal}></div>
+    <div class="bg-white w-full max-w-lg rounded-[30px] p-8 md:p-10 relative shadow-2xl flex flex-col gap-6 z-10 animate-in fade-in zoom-in-95 duration-200">
+      <h2 class="text-3xl font-bold text-gray-600 text-center mb-2">Edit Penilaian</h2>
+      <div class="flex flex-col gap-5">
+        <div>
+          <label class="text-gray-600 font-semibold mb-2 block ml-1" for="editNama">Nama Siswa</label>
+          <input type="text" id="editNama" bind:value={editNama} placeholder="Masukkan Nama Siswa" class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none focus:ring-2 focus:ring-amber-500 text-gray-800 placeholder:text-gray-500 font-medium"/>
+        </div>
+        <div>
+          <label class="text-gray-600 font-semibold mb-2 block ml-1" for="editNoInduk">Nomor Induk Siswa</label>
+          <input type="text" id="editNoInduk" bind:value={editNoInduk} placeholder="Masukkan Nomor Induk Siswa" class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none focus:ring-2 focus:ring-amber-500 text-gray-800 placeholder:text-gray-500 font-medium"/>
+        </div>
+        <div>
+          <label class="text-gray-600 font-semibold mb-2 block ml-1" for="editTahun">Tahun Pelajaran</label>
+          <input type="text" id="editTahun" value={selectedYear} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none text-gray-800 font-medium opacity-80 cursor-not-allowed" readonly disabled/>
+        </div>
+      </div>
+      <button 
+        on:click={handleEditPenilaian} 
+        disabled={isEditing}
+        class="w-full py-4 mt-4 bg-amber-500 text-white rounded-2xl font-bold text-lg transition-colors shadow-sm flex items-center justify-center gap-2 {isEditing ? 'opacity-70 cursor-not-allowed' : 'hover:bg-amber-600'}"
+      >
+        {#if isEditing}
+          <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Menyimpan
+        {:else}
+          Simpan Perubahan
+        {/if}
+      </button>
+      <button on:click={closeEditModal} class="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors bg-gray-100 p-2 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
     </div>
   </div>
 {/if}
