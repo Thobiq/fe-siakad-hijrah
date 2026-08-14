@@ -18,11 +18,39 @@
     }
   }
 
+  // 4. Logika untuk Dropdown Siswa
+  let isSiswaOpen = false;
+  $: {
+    if (currentPath.startsWith('/siswa')) {
+      isSiswaOpen = true;
+    }
+  }
+
+  // 5. Logika untuk Dropdown Kelas
+  let isKelasOpen = false;
+  $: {
+    if (currentPath.startsWith('/kelas')) {
+      isKelasOpen = true;
+    }
+  }
+
+  // 6. Logika untuk Dropdown E-Rapor
+  let isERaporOpen = false;
+  $: {
+    if (currentPath.startsWith('/e-rapor')) {
+      isERaporOpen = true;
+    }
+  }
+
   function closeSidebar() {
     isOpen = false;
   }
 
+  let showLogoutModal = false;
+  let isLoggingOut = false;
+
   async function handleLogout() {
+    isLoggingOut = true;
     const token = localStorage.getItem('auth_token');
     
     if (token) {
@@ -48,6 +76,29 @@
     goto('/login');
   }
 </script>
+
+{#if showLogoutModal}
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" on:click={() => showLogoutModal = false}></div>
+    <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative z-10 flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
+      <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-800 mb-2">Konfirmasi Logout</h3>
+      <p class="text-gray-500 text-center mb-8">Apakah Anda yakin ingin keluar dari aplikasi?</p>
+      <div class="flex gap-3 w-full">
+        <button class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors" on:click={() => showLogoutModal = false} disabled={isLoggingOut}>Batal</button>
+        <button class="flex-1 py-3 px-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2" on:click={handleLogout} disabled={isLoggingOut}>
+          {#if isLoggingOut}
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          {:else}
+            Ya, Keluar
+          {/if}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 {#if isOpen}
   <div class="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity" on:click={closeSidebar}></div>
@@ -78,10 +129,60 @@
         Guru
       </a>
 
-      <a href="/siswa" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {currentPath.startsWith('/siswa') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-medium'}" on:click={closeSidebar}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-        Siswa
-      </a>
+      <div class="flex flex-col">
+        <button 
+          class="flex items-center justify-between w-full px-4 py-3 rounded-xl transition-colors {currentPath.startsWith('/siswa') ? 'text-white font-bold bg-white/10' : 'text-white/90 hover:bg-white/10 hover:text-white font-medium'}"
+          on:click={() => isSiswaOpen = !isSiswaOpen}
+        >
+          <div class="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <span>Siswa</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 {isSiswaOpen ? 'rotate-180' : ''}"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+
+        {#if isSiswaOpen}
+          <div class="flex flex-col gap-1 mt-1 mb-2 ml-[25px] pl-5 border-l-2 border-white/40">
+            <a href="/siswa/kb" class="block px-5 py-2.5 rounded-xl transition-colors {currentPath.startsWith('/siswa/kb') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-bold'}" on:click={closeSidebar}>
+              Siswa KB
+            </a>
+            <a href="/siswa/tk-a" class="block px-5 py-2.5 rounded-xl transition-colors {currentPath.startsWith('/siswa/tk-a') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-bold'}" on:click={closeSidebar}>
+              Siswa TK A
+            </a>
+            <a href="/siswa/tk-b" class="block px-5 py-2.5 rounded-xl transition-colors {currentPath.startsWith('/siswa/tk-b') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-bold'}" on:click={closeSidebar}>
+              Siswa TK B
+            </a>
+          </div>
+        {/if}
+      </div>
+
+      <div class="flex flex-col">
+        <button 
+          class="flex items-center justify-between w-full px-4 py-3 rounded-xl transition-colors {currentPath.startsWith('/kelas') ? 'text-white font-bold bg-white/10' : 'text-white/90 hover:bg-white/10 hover:text-white font-medium'}"
+          on:click={() => isKelasOpen = !isKelasOpen}
+        >
+          <div class="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+            <span>Kelas</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 {isKelasOpen ? 'rotate-180' : ''}"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+
+        {#if isKelasOpen}
+          <div class="flex flex-col gap-1 mt-1 mb-2 ml-[25px] pl-5 border-l-2 border-white/40">
+            <a href="/kelas/kb" class="block px-5 py-2.5 rounded-xl transition-colors {currentPath.startsWith('/kelas/kb') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-bold'}" on:click={closeSidebar}>
+              Kelas KB
+            </a>
+            <a href="/kelas/tk-a" class="block px-5 py-2.5 rounded-xl transition-colors {currentPath.startsWith('/kelas/tk-a') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-bold'}" on:click={closeSidebar}>
+              Kelas TK A
+            </a>
+            <a href="/kelas/tk-b" class="block px-5 py-2.5 rounded-xl transition-colors {currentPath.startsWith('/kelas/tk-b') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-bold'}" on:click={closeSidebar}>
+              Kelas TK B
+            </a>
+          </div>
+        {/if}
+      </div>
+
       <a href="/elemen-penilaian" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {currentPath.startsWith('/elemen-penilaian') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-medium'}" on:click={closeSidebar}>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
         Elemen Penilaian
@@ -114,15 +215,37 @@
         {/if}
       </div>
 
-      <a href="/e-rapor" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {currentPath.startsWith('/e-rapor') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-medium'}" on:click={closeSidebar}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l.99-3.95 5.43-5.44Z"/></svg>
-        E-Rapor
-      </a>
+      <div class="flex flex-col">
+        <button 
+          class="flex items-center justify-between w-full px-4 py-3 rounded-xl transition-colors {currentPath.startsWith('/e-rapor') ? 'text-white font-bold bg-white/10' : 'text-white/90 hover:bg-white/10 hover:text-white font-medium'}"
+          on:click={() => isERaporOpen = !isERaporOpen}
+        >
+          <div class="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l.99-3.95 5.43-5.44Z"/></svg>
+            <span>E-Rapor</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 {isERaporOpen ? 'rotate-180' : ''}"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+
+        {#if isERaporOpen}
+          <div class="flex flex-col gap-1 mt-1 mb-2 ml-[25px] pl-5 border-l-2 border-white/40">
+            <a href="/e-rapor/kb" class="block px-5 py-2.5 rounded-xl transition-colors {currentPath.startsWith('/e-rapor/kb') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-bold'}" on:click={closeSidebar}>
+              E-Rapor KB
+            </a>
+            <a href="/e-rapor/tk-a" class="block px-5 py-2.5 rounded-xl transition-colors {currentPath.startsWith('/e-rapor/tk-a') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-bold'}" on:click={closeSidebar}>
+              E-Rapor TK A
+            </a>
+            <a href="/e-rapor/tk-b" class="block px-5 py-2.5 rounded-xl transition-colors {currentPath.startsWith('/e-rapor/tk-b') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-bold'}" on:click={closeSidebar}>
+              E-Rapor TK B
+            </a>
+          </div>
+        {/if}
+      </div>
     </nav>
 
     <div class="p-4 mb-4">
       <button 
-        on:click={handleLogout} 
+        on:click={() => showLogoutModal = true} 
         class="w-full flex items-center gap-3 text-white hover:bg-white/10 px-4 py-3 rounded-xl font-bold transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>

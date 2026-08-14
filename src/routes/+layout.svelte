@@ -12,8 +12,11 @@
       const token = localStorage.getItem('auth_token');
       const currentPath = $page.url.pathname;
 
-      // 1. Jika TIDAK ADA token dan mencoba masuk ke halaman selain '/login'
-      if (!token && currentPath !== '/login') {
+      // Daftar halaman yang bisa diakses tanpa login (public)
+      const publicPaths = ['/login', '/forgot-password', '/reset-password'];
+
+      // 1. Jika TIDAK ADA token dan mencoba masuk ke halaman selain public
+      if (!token && !publicPaths.includes(currentPath)) {
         goto('/login');
       }
 

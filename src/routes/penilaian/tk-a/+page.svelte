@@ -57,7 +57,7 @@
     </header>
 
     <main class="flex-1 overflow-y-auto p-0 flex flex-col">
-      <TablePenilaian bind:data={dataTKA} basePath="/penilaian/tk-a" tingkat="TK A" />
+      <TablePenilaian bind:data={dataTKA} basePath="/penilaian/tk-a" tingkat="TK A" isLoading={isLoading} />
     </main>
 
   </div>

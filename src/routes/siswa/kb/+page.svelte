@@ -1,30 +1,54 @@
 <script lang="ts">
   import Sidebar from '$lib/components/Sidebar.svelte';
-  import TablePenilaian from '$lib/components/TablePenilaian.svelte';
+  import TableSiswa from '$lib/components/TableSiswa.svelte';
   import { onMount } from 'svelte';
-  import {PUBLIC_API_URL} from '$env/static/public';
+  import { PUBLIC_API_URL } from '$env/static/public';
   
   let isSidebarOpen = false;
   let userName = "Bu Hijrah";
 
-  let dataTKB = [];
+  let dataSiswaKB = [];
+  let dataKelasKB = [];
   let isLoading = true;
 
   onMount(async () => {
     const token = localStorage.getItem('auth_token');
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-    if(userData.name) userName = userData.name;
+    if (userData.name) userName = userData.name;
 
     try {
-      const response = await fetch(`${PUBLIC_API_URL}/penilaian?tingkat=TK B`, {
+      // Fetch Data Siswa
+      const response = await fetch(`${PUBLIC_API_URL}/siswa?tingkat=KB`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       });
       const result = await response.json();
+
+      // Fetch Data Kelas
+      const kelasRes = await fetch(`${PUBLIC_API_URL}/kelas?tingkat=KB`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+      });
+      const kelasResult = await kelasRes.json();
+      if (kelasRes.ok && kelasResult.status) {
+        dataKelasKB = kelasResult.data;
+      }
+      
       if (response.ok && result.status) {
-        dataTKB = result.data;
+        // 2. Mapping data dari database (snake_case) ke format komponen tabel (camelCase)
+        dataSiswaKB = result.data.map(item => ({
+          id: item.id,
+          nama: item.nama,
+          noInduk: item.nomor_induk,
+          nisn: item.nisn,
+          ttl: item.ttl,
+          alamat: item.alamat,
+          namaIbu: item.nama_ibu,
+          status: item.status,
+          kelas_id: item.kelas_id,
+          kelas: item.kelas
+        }));
       }
     } catch (error) {
-      console.error("Gagal mengambil data penilaian:", error);
+      console.error("Gagal mengambil data siswa:", error);
     } finally {
       isLoading = false;
     }
@@ -32,7 +56,7 @@
 </script>
 
 <svelte:head>
-  <title>Penilaian TK B - SIAKAD Al Hijrah</title>
+  <title>Siswa KB - SIAKAD Al Hijrah</title>
 </svelte:head>
 
 <div class="flex h-screen bg-gray-50 overflow-hidden font-sans">
@@ -46,7 +70,7 @@
         <button class="md:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg transition" on:click={() => isSidebarOpen = true}>
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
         </button>
-        <h1 class="text-xl font-bold text-gray-600">Penilaian TK B</h1>
+        <h1 class="text-xl font-bold text-gray-600">Siswa KB</h1>
       </div>
       <div class="flex items-center gap-3">
         <span class="font-bold text-gray-600 hidden sm:block">{userName}</span>
@@ -57,7 +81,7 @@
     </header>
 
     <main class="flex-1 overflow-y-auto p-0 flex flex-col">
-      <TablePenilaian bind:data={dataTKB} basePath="/penilaian/tk-b" tingkat="TK B" isLoading={isLoading} />
+      <TableSiswa bind:data={dataSiswaKB} bind:dataKelas={dataKelasKB} basePath="/siswa/kb" tingkat="KB" isLoading={isLoading} />
     </main>
 
   </div>

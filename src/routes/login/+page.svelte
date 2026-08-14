@@ -119,6 +119,12 @@
           </button>
         </div>
 
+        <div class="flex justify-end mt-[-10px] mb-2">
+          <a href="/forgot-password" class="text-sm font-semibold text-gray-500 hover:text-[#2da76b] transition-colors">
+            Lupa Password?
+          </a>
+        </div>
+
         <button 
           type="submit"
           disabled={isLoading}
