@@ -3,8 +3,46 @@
   import { page } from '$app/stores';
   import {goto} from '$app/navigation';
   import {PUBLIC_API_URL} from '$env/static/public';
+  import { onMount } from 'svelte';
 
   export let isOpen = false;
+
+  let profilSekolah = {
+    nama_sekolah: 'Yayasan Al-Hijrah',
+    logo_path: null
+  };
+
+  let logoUrl = '/logo-alhijrah.png';
+
+  onMount(async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        const response = await fetch(`${PUBLIC_API_URL}/profil-sekolah`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        if (response.ok) {
+          profilSekolah = await response.json();
+          if (profilSekolah.logo_path) {
+              const baseUrl = PUBLIC_API_URL.replace('/api', '');
+              logoUrl = `${baseUrl}/${profilSekolah.logo_path}`;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Gagal mengambil profil sekolah:', e);
+    }
+
+    const handleUpdate = (e: any) => {
+        profilSekolah = e.detail;
+        if (profilSekolah.logo_path) {
+            const baseUrl = PUBLIC_API_URL.replace('/api', '');
+            logoUrl = `${baseUrl}/${profilSekolah.logo_path}`;
+        }
+    };
+    window.addEventListener('profilUpdated', handleUpdate);
+    return () => window.removeEventListener('profilUpdated', handleUpdate);
+  });
 
   // 2. Buat variabel reaktif untuk memantau URL saat ini
   $: currentPath = $page.url.pathname;
@@ -112,16 +150,21 @@
     
     <div class="p-6 flex items-center gap-3 border-b border-white/20 mt-2">
       <div class="w-10 h-10 rounded-full bg-yellow-400 overflow-hidden flex items-center justify-center shrink-0">
-        <img src="/logo-alhijrah.png" alt="Logo" class="w-full h-full object-cover" />
+        <img src={logoUrl} alt="Logo" class="w-full h-full object-cover" />
       </div>
-      <h2 class="font-semibold text-lg leading-tight">Yayasan Al-Hijrah</h2>
+      <h2 class="font-semibold text-lg leading-tight">{profilSekolah.nama_sekolah}</h2>
     </div>
 
     <nav class="flex-1 px-4 py-8 flex flex-col gap-2 overflow-y-auto">
       
-      <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {currentPath.startsWith('/dashboard') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-medium'}" on:click={closeSidebar}>
+      <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {currentPath === '/dashboard' || currentPath === '/' ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-medium'}" on:click={closeSidebar}>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
         Dashboard
+      </a>
+
+      <a href="/profil-sekolah" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {currentPath.startsWith('/profil-sekolah') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-medium'}" on:click={closeSidebar}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Profil Sekolah
       </a>
 
       <a href="/guru" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {currentPath.startsWith('/guru') ? 'bg-white text-[#2da76b] font-bold shadow-sm' : 'text-white/90 hover:bg-white/10 hover:text-white font-medium'}" on:click={closeSidebar}>
