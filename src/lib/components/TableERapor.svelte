@@ -5,17 +5,24 @@
   
   // Fitur Pencarian
   let searchQuery = "";
+  let selectedKelasFilter = "all";
   
   // State Loading untuk Download PDF
   let downloadingId = null;
 
+  $: uniqueKelas = [...new Map(data.filter(item => item.kelas).map(item => [item.kelas, { nama_kelas: item.kelas, tahun_ajaran: item.tahun_ajaran }])).values()].sort((a, b) => a.nama_kelas.localeCompare(b.nama_kelas));
+
   $: displayedData = data.filter(item => {
+    const matchKelas = selectedKelasFilter === "all" || item.kelas === selectedKelasFilter;
+    if (!matchKelas) return false;
+
     if (!searchQuery) return true;
     const term = searchQuery.toLowerCase();
     return (
       item.nama?.toLowerCase().includes(term) ||
       item.noInduk?.toLowerCase().includes(term) ||
-      item.kelas?.toLowerCase().includes(term)
+      item.kelas?.toLowerCase().includes(term) ||
+      item.tahun_ajaran?.toLowerCase().includes(term)
     );
   });
 
@@ -89,9 +96,22 @@
   
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
     <h2 class="text-xl font-bold text-gray-700">Daftar Siswa (Penilaian Selesai)</h2>
-    <div class="relative w-full md:w-[300px]">
-      <input type="text" bind:value={searchQuery} placeholder="Cari siswa..." class="w-full pl-5 pr-10 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#2da76b] focus:border-[#2da76b] outline-none text-gray-700 transition-all"/>
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    
+    <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+      <div class="relative w-full sm:w-[250px]">
+        <select bind:value={selectedKelasFilter} class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#2da76b] focus:border-[#2da76b] outline-none text-gray-700 transition-all appearance-none pr-10 cursor-pointer">
+          <option value="all">Semua Kelas</option>
+          {#each uniqueKelas as k}
+            <option value={k.nama_kelas}>{k.nama_kelas} ({k.tahun_ajaran})</option>
+          {/each}
+        </select>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+
+      <div class="relative w-full sm:w-[250px]">
+        <input type="text" bind:value={searchQuery} placeholder="Cari siswa..." class="w-full pl-5 pr-10 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#2da76b] focus:border-[#2da76b] outline-none text-gray-700 transition-all"/>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </div>
     </div>
   </div>
 
@@ -120,7 +140,7 @@
             <tr class="odd:bg-white even:bg-gray-50 hover:bg-green-50/50 transition-colors">
               <td class="px-6 py-4 font-bold text-gray-700">{row.nama}</td>
               <td class="px-6 py-4 text-gray-600">{row.noInduk}</td>
-              <td class="px-6 py-4 text-gray-600">{row.kelas}</td>
+              <td class="px-6 py-4 text-gray-600">{row.kelas} ({row.tahun_ajaran})</td>
               <td class="px-6 py-4 flex items-center justify-center gap-2">
                 {#if row.rapor_id}
                   <a href="/e-rapor/{tingkat.toLowerCase().replace(' ', '-')}/buat/{row.id}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl font-bold transition-colors shadow-sm text-sm flex items-center gap-2">

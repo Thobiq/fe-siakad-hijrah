@@ -6,10 +6,26 @@
   export let tingkat = "KB"; 
   export let isLoading = false;
 
-  // --- STATE UNTUK DROPDOWN TAHUN ---
-  let showYearDropdown = false;
-  let selectedYear = "25/26";
-  const years = ["24/25", "25/26", "26/27"];
+  // --- STATE UNTUK FILTER & PENCARIAN ---
+  let searchQuery = "";
+  let selectedKelasFilter = "all";
+
+  // Karena dataKelas tidak diteruskan secara langsung, kita ambil dari data penilaian yang ada
+  $: uniqueKelas = [...new Map(data.filter(item => item.kelas).map(item => [item.kelas, { nama_kelas: item.kelas, tahun_ajaran: item.tahun_ajaran }])).values()].sort((a, b) => a.nama_kelas.localeCompare(b.nama_kelas));
+
+  $: displayedData = data.filter(item => {
+    const matchKelas = selectedKelasFilter === "all" || item.kelas === selectedKelasFilter;
+    if (!matchKelas) return false;
+
+    if (!searchQuery) return true;
+    const term = searchQuery.toLowerCase();
+    return (
+      item.nama?.toLowerCase().includes(term) ||
+      item.noInduk?.toLowerCase().includes(term) ||
+      item.kelas?.toLowerCase().includes(term) ||
+      item.tahun_ajaran?.toLowerCase().includes(term)
+    );
+  });
 
   // --- STATE UNTUK MODAL DOWNLOAD & HAPUS ---
   let showDownloadModal = false;
@@ -246,12 +262,18 @@
   let showModal = false;
   let inputNama = "";
   let inputNoInduk = "";
-  let inputTahun = selectedYear;
+  let inputTahun = "";
 
   function openModal() {
     inputNama = "";
     inputNoInduk = "";
-    inputTahun = selectedYear; // Sinkronkan dengan tahun yang sedang dipilih
+    // Coba ambil tahun ajaran dari kelas yang dipilih jika ada
+    if (selectedKelasFilter !== "all") {
+      const selectedClassData = uniqueKelas.find(k => k.nama_kelas === selectedKelasFilter);
+      inputTahun = selectedClassData ? selectedClassData.tahun_ajaran : "";
+    } else {
+      inputTahun = ""; 
+    }
     showModal = true;
   }
 
@@ -349,7 +371,7 @@
         body: JSON.stringify({
           nama: editNama,
           no_induk: editNoInduk,
-          tahun_ajaran: selectedYear,
+          tahun_ajaran: inputTahun,
           tingkat: tingkat 
         })
       });
@@ -386,28 +408,19 @@
           Tambah Penilaian
         </button>
 
-        <div class="flex items-center gap-3 relative">
-          <span class="font-bold text-gray-600">Tahun</span>
-          <button class="border-2 border-[#2da76b] text-[#2da76b] px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-green-50 transition-colors w-[100px] justify-between" on:click={() => showYearDropdown = !showYearDropdown}>
-            {selectedYear}
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200 {showYearDropdown ? 'rotate-180' : ''}"><path d="m6 9 6 6 6-6"/></svg>
-          </button>
-
-          {#if showYearDropdown}
-            <div class="fixed inset-0 z-10" on:click={() => showYearDropdown = false}></div>
-            <div class="absolute top-12 right-0 w-[100px] bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden z-20 flex flex-col">
-              {#each years as year}
-                <button class="px-4 py-2 text-left font-semibold text-gray-600 hover:bg-[#2da76b] hover:text-white transition-colors {selectedYear === year ? 'bg-green-50 text-[#2da76b]' : ''}" on:click={() => { selectedYear = year; showYearDropdown = false; }}>
-                  {year}
-                </button>
-              {/each}
-            </div>
-          {/if}
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <span class="font-bold text-gray-600 hidden sm:block">Kelas</span>
+          <select bind:value={selectedKelasFilter} class="border-2 border-[#2da76b] text-[#2da76b] px-4 py-2.5 rounded-xl font-bold bg-white focus:outline-none focus:ring-2 focus:ring-green-200 transition-all appearance-none cursor-pointer pr-10">
+            <option value="all">Semua Kelas</option>
+            {#each uniqueKelas as k}
+              <option value={k.nama_kelas}>{k.nama_kelas} ({k.tahun_ajaran})</option>
+            {/each}
+          </select>
         </div>
       </div>
 
       <div class="relative w-full md:w-[300px]">
-        <input type="text" placeholder="Cari data..." class="w-full pl-5 pr-10 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#2da76b] focus:border-[#2da76b] outline-none text-gray-700 transition-all"/>
+        <input type="text" bind:value={searchQuery} placeholder="Cari data..." class="w-full pl-5 pr-10 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#2da76b] focus:border-[#2da76b] outline-none text-gray-700 transition-all"/>
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       </div>
     </div>
@@ -418,6 +431,7 @@
           <tr class="bg-[#2da76b] text-white">
             <th class="px-6 py-4 font-semibold text-sm">Nama</th>
             <th class="px-6 py-4 font-semibold text-sm">No. Induk</th>
+            <th class="px-6 py-4 font-semibold text-sm">Kelas</th>
             <th class="px-6 py-4 font-semibold text-sm">Status</th>
             <th class="px-6 py-4 font-semibold text-sm text-right">Aksi</th>
           </tr>
@@ -425,7 +439,7 @@
         <tbody>
           {#if isLoading}
             <tr>
-              <td colspan="4" class="px-6 py-8 text-center text-gray-500 font-medium">
+              <td colspan="5" class="px-6 py-8 text-center text-gray-500 font-medium">
                 <div class="flex items-center justify-center gap-3">
                   <svg class="animate-spin h-6 w-6 text-[#2da76b]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                   Memuat data...
@@ -433,10 +447,11 @@
               </td>
             </tr>
           {:else}
-            {#each data as row}
+            {#each displayedData as row}
               <tr class="odd:bg-white even:bg-gray-50 hover:bg-green-50/50 transition-colors cursor-pointer" on:click={() => goto(`${basePath}/${row.id}`)}>
                 <td class="px-6 py-4 font-medium text-gray-700">{row.nama}</td>
                 <td class="px-6 py-4 text-gray-600">{row.noInduk}</td>
+                <td class="px-6 py-4 text-gray-600">{row.kelas} ({row.tahun_ajaran})</td>
                 <td class="px-6 py-4">
                   <span class="px-4 py-1.5 rounded-full text-sm font-bold {row.status === 'Selesai' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">{row.status}</span>
                 </td>
@@ -451,9 +466,9 @@
                 </td>
               </tr>
             {/each}
-            {#if data.length === 0}
+            {#if displayedData.length === 0}
               <tr>
-                <td colspan="4" class="px-6 py-8 text-center text-gray-400 font-medium">Tidak ada data ditemukan.</td>
+                <td colspan="5" class="px-6 py-8 text-center text-gray-400 font-medium">Tidak ada data ditemukan.</td>
               </tr>
             {/if}
           {/if}
@@ -553,7 +568,7 @@
         </div>
         <div>
           <label class="text-gray-600 font-semibold mb-2 block ml-1" for="editTahun">Tahun Pelajaran</label>
-          <input type="text" id="editTahun" value={selectedYear} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none text-gray-800 font-medium opacity-80 cursor-not-allowed" readonly disabled/>
+          <input type="text" id="editTahun" bind:value={inputTahun} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none text-gray-800 font-medium" />
         </div>
       </div>
       <button 

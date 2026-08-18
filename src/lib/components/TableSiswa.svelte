@@ -55,7 +55,13 @@
   $: displayedData = data
     .filter(item => {
       // Fitur Filter Kelas
-      if (selectedKelasFilter !== "all" && item.kelas_id != selectedKelasFilter) return false;
+      if (selectedKelasFilter !== "all") {
+        if (selectedKelasFilter === "") {
+          if (item.kelas_id) return false;
+        } else {
+          if (item.kelas_id != selectedKelasFilter) return false;
+        }
+      }
 
       // Fitur Pencarian Cerdas (Cari di semua text)
       if (!searchQuery) return true;
@@ -331,7 +337,7 @@
             <option value="all">Semua Kelas</option>
             <option value="">-- Belum Ada Kelas --</option>
             {#each dataKelas as k}
-              <option value={k.id}>{k.nama_kelas}</option>
+              <option value={k.id}>{k.nama_kelas} ({k.tahun_ajaran})</option>
             {/each}
           </select>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#2da76b] pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
@@ -502,7 +508,7 @@
             <select bind:value={formKelasId} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none focus:ring-2 focus:ring-[#2da76b] text-gray-800 font-medium transition-all">
               <option value="">-- Belum Ada Kelas --</option>
               {#each dataKelas as k}
-                <option value={k.id}>{k.nama_kelas}</option>
+                <option value={k.id}>{k.nama_kelas} ({k.tahun_ajaran})</option>
               {/each}
             </select>
           </div>
@@ -599,7 +605,7 @@
               <select bind:value={bulkActionTargetKelasId} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none focus:ring-2 focus:ring-[#2da76b] text-gray-800 font-medium transition-all">
                 <option value="">-- Kosongkan Kelas --</option>
                 {#each dataKelas as k}
-                  <option value={k.id}>{k.nama_kelas}</option>
+                  <option value={k.id}>{k.nama_kelas} ({k.tahun_ajaran})</option>
                 {/each}
               </select>
               <p class="text-xs text-gray-400 mt-2 ml-1">*Catatan: Data pilihan kelas di dropdown ini berdasarkan tingkat halaman yang Anda buka sekarang.</p>
