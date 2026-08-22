@@ -24,7 +24,7 @@
         if (response.ok) {
           profilSekolah = await response.json();
           if (profilSekolah.logo_path) {
-              const baseUrl = PUBLIC_API_URL.replace('/api', '');
+              const baseUrl = PUBLIC_API_URL.replace(/\/api\/?$/, '');
               logoUrl = `${baseUrl}/${profilSekolah.logo_path}`;
           }
         }
@@ -36,7 +36,7 @@
     const handleUpdate = (e: any) => {
         profilSekolah = e.detail;
         if (profilSekolah.logo_path) {
-            const baseUrl = PUBLIC_API_URL.replace('/api', '');
+            const baseUrl = PUBLIC_API_URL.replace(/\/api\/?$/, '');
             logoUrl = `${baseUrl}/${profilSekolah.logo_path}`;
         }
     };

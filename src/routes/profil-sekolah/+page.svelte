@@ -49,7 +49,7 @@
             if (response.ok) {
                 profil = res;
                 if (profil.logo_path) {
-                    const baseUrl = PUBLIC_API_URL.replace('/api', '');
+                    const baseUrl = PUBLIC_API_URL.replace(/\/api\/?$/, '');
                     imagePreview = `${baseUrl}/` + profil.logo_path;
                 }
             }
@@ -97,7 +97,7 @@
             const result = await res.json();
             profil = result.data;
             if (profil.logo_path) {
-                const baseUrl = PUBLIC_API_URL.replace('/api', '');
+                const baseUrl = PUBLIC_API_URL.replace(/\/api\/?$/, '');
                 imagePreview = `${baseUrl}/` + profil.logo_path;
             }
             
