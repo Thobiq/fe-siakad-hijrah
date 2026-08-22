@@ -6,6 +6,7 @@
   // Fitur Pencarian
   let searchQuery = "";
   let selectedKelasFilter = "all";
+  let selectedSemesterFilter = "all";
   
   // State Loading untuk Download PDF
   let downloadingId = null;
@@ -16,13 +17,17 @@
     const matchKelas = selectedKelasFilter === "all" || item.kelas === selectedKelasFilter;
     if (!matchKelas) return false;
 
+    const matchSemester = selectedSemesterFilter === "all" || item.semester === selectedSemesterFilter;
+    if (!matchSemester) return false;
+
     if (!searchQuery) return true;
     const term = searchQuery.toLowerCase();
     return (
       item.nama?.toLowerCase().includes(term) ||
       item.noInduk?.toLowerCase().includes(term) ||
       item.kelas?.toLowerCase().includes(term) ||
-      item.tahun_ajaran?.toLowerCase().includes(term)
+      item.tahun_ajaran?.toLowerCase().includes(term) ||
+      item.semester?.toLowerCase().includes(term)
     );
   });
 
@@ -98,6 +103,15 @@
     <h2 class="text-xl font-bold text-gray-700">Daftar Siswa (Penilaian Selesai)</h2>
     
     <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+      <div class="relative w-full sm:w-[150px]">
+        <select bind:value={selectedSemesterFilter} class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#2da76b] focus:border-[#2da76b] outline-none text-gray-700 transition-all appearance-none pr-10 cursor-pointer">
+          <option value="all">Semua Semester</option>
+          <option value="Ganjil">Ganjil</option>
+          <option value="Genap">Genap</option>
+        </select>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+
       <div class="relative w-full sm:w-[250px]">
         <select bind:value={selectedKelasFilter} class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#2da76b] focus:border-[#2da76b] outline-none text-gray-700 transition-all appearance-none pr-10 cursor-pointer">
           <option value="all">Semua Kelas</option>
@@ -138,9 +152,14 @@
         {:else}
           {#each displayedData as row}
             <tr class="odd:bg-white even:bg-gray-50 hover:bg-green-50/50 transition-colors">
-              <td class="px-6 py-4 font-bold text-gray-700">{row.nama}</td>
+              <td class="px-6 py-4 font-medium text-gray-700">{row.nama}</td>
               <td class="px-6 py-4 text-gray-600">{row.noInduk}</td>
-              <td class="px-6 py-4 text-gray-600">{row.kelas} ({row.tahun_ajaran})</td>
+              <td class="px-6 py-4 text-gray-600">
+                <div class="flex flex-col">
+                  <span>{row.kelas} ({row.tahun_ajaran})</span>
+                  <span class="text-xs text-[#2da76b] font-semibold">Semester {row.semester || '-'}</span>
+                </div>
+              </td>
               <td class="px-6 py-4 flex items-center justify-center gap-2">
                 {#if row.rapor_id}
                   <a href="/e-rapor/{tingkat.toLowerCase().replace(' ', '-')}/buat/{row.id}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl font-bold transition-colors shadow-sm text-sm flex items-center gap-2">

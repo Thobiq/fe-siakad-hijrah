@@ -227,6 +227,32 @@
     }
   }
 
+  let targetKelasList = [];
+
+  async function fetchTargetKelas(t) {
+    if (!t) return;
+    const token = localStorage.getItem('auth_token');
+    try {
+      const response = await fetch(`${PUBLIC_API_URL}/kelas?tingkat=${t}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+      });
+      const result = await response.json();
+      if (result.status) {
+        targetKelasList = result.data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  $: {
+    if (showBulkActionModal && currentBulkAction === 'naik_kelas') {
+      fetchTargetKelas(bulkActionTargetTingkat);
+    } else {
+      targetKelasList = dataKelas;
+    }
+  }
+
   function openBulkActionModal(action) {
     currentBulkAction = action;
     showBulkActionDropdown = false;
@@ -434,7 +460,7 @@
                 <td class="px-6 py-4 text-gray-600">{row.pekerjaan_ayah || '-'}</td>
                 <td class="px-6 py-4 text-gray-600">{row.nama_ibu || row.namaIbu || '-'}</td>
                 <td class="px-6 py-4 text-gray-600">{row.pekerjaan_ibu || '-'}</td>
-                <td class="px-6 py-4 text-[#2da76b] font-bold">{row.kelas ? row.kelas.nama_kelas : '-'}</td>
+                <td class="px-6 py-4 text-[#2da76b] font-bold">{row.kelas ? `${row.kelas.nama_kelas} (${row.kelas.tahun_ajaran})` : '-'}</td>
                 <td class="px-6 py-4">
                   <span class="px-4 py-1.5 rounded-full text-sm font-bold {row.status === 'Aktif' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}">{row.status}</span>
                 </td>
@@ -604,11 +630,11 @@
               <label class="text-gray-600 font-semibold mb-2 block ml-1">Pilih Kelas Tujuan</label>
               <select bind:value={bulkActionTargetKelasId} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none focus:ring-2 focus:ring-[#2da76b] text-gray-800 font-medium transition-all">
                 <option value="">-- Kosongkan Kelas --</option>
-                {#each dataKelas as k}
+                {#each targetKelasList as k}
                   <option value={k.id}>{k.nama_kelas} ({k.tahun_ajaran})</option>
                 {/each}
               </select>
-              <p class="text-xs text-gray-400 mt-2 ml-1">*Catatan: Data pilihan kelas di dropdown ini berdasarkan tingkat halaman yang Anda buka sekarang.</p>
+              <p class="text-xs text-gray-400 mt-2 ml-1">*Catatan: Data pilihan kelas di dropdown ini menyesuaikan tingkat yang Anda pilih.</p>
             </div>
           {:else if currentBulkAction === 'ubah_status'}
             <div>

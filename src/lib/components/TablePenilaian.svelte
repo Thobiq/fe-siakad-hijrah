@@ -1,21 +1,45 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import {PUBLIC_API_URL} from '$env/static/public';
+  import { onMount } from 'svelte';
   export let data = [];
   export let basePath = "";
   export let tingkat = "KB"; 
   export let isLoading = false;
 
+  let allSiswa = [];
+  
+  onMount(async () => {
+    const token = localStorage.getItem('auth_token');
+    try {
+      const response = await fetch(`${PUBLIC_API_URL}/siswa?tingkat=${tingkat}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+      });
+      const result = await response.json();
+      if (response.ok && result.status) {
+        allSiswa = result.data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  });
+
   // --- STATE UNTUK FILTER & PENCARIAN ---
   let searchQuery = "";
   let selectedKelasFilter = "all";
+  let selectedSemesterFilter = "all";
 
   // Karena dataKelas tidak diteruskan secara langsung, kita ambil dari data penilaian yang ada
   $: uniqueKelas = [...new Map(data.filter(item => item.kelas).map(item => [item.kelas, { nama_kelas: item.kelas, tahun_ajaran: item.tahun_ajaran }])).values()].sort((a, b) => a.nama_kelas.localeCompare(b.nama_kelas));
 
+  $: availableSiswa = selectedKelasFilter === "all" ? allSiswa : allSiswa.filter(s => s.kelas && s.kelas.nama_kelas === selectedKelasFilter);
+
   $: displayedData = data.filter(item => {
     const matchKelas = selectedKelasFilter === "all" || item.kelas === selectedKelasFilter;
     if (!matchKelas) return false;
+
+    const matchSemester = selectedSemesterFilter === "all" || item.semester === selectedSemesterFilter;
+    if (!matchSemester) return false;
 
     if (!searchQuery) return true;
     const term = searchQuery.toLowerCase();
@@ -23,7 +47,8 @@
       item.nama?.toLowerCase().includes(term) ||
       item.noInduk?.toLowerCase().includes(term) ||
       item.kelas?.toLowerCase().includes(term) ||
-      item.tahun_ajaran?.toLowerCase().includes(term)
+      item.tahun_ajaran?.toLowerCase().includes(term) ||
+      item.semester?.toLowerCase().includes(term)
     );
   });
 
@@ -263,10 +288,12 @@
   let inputNama = "";
   let inputNoInduk = "";
   let inputTahun = "";
+  let inputSemester = "Ganjil";
 
   function openModal() {
     inputNama = "";
     inputNoInduk = "";
+    inputSemester = selectedSemesterFilter !== "all" ? selectedSemesterFilter : "Ganjil";
     // Coba ambil tahun ajaran dari kelas yang dipilih jika ada
     if (selectedKelasFilter !== "all") {
       const selectedClassData = uniqueKelas.find(k => k.nama_kelas === selectedKelasFilter);
@@ -279,28 +306,36 @@
 
   function closeModal() {
     showModal = false;
+    showDropdown = false;
   }
 
-  async function handleTambahPenilaian() {
-    if (!inputNama || !inputNoInduk) {
-      alert("Nama dan Nomor Induk Siswa harus diisi!");
+  let showDropdown = false;
+  $: filteredSiswa = availableSiswa.filter(s => s.nama.toLowerCase().includes(inputNama.toLowerCase()));
+
+  function selectSiswa(siswa) {
+    inputNama = siswa.nama;
+    inputNoInduk = siswa.nomor_induk;
+    showDropdown = false;
+  }
+
+  async function handleSubmit() {
+    if(!inputNama || !inputNoInduk || !inputTahun || !inputSemester) {
+      alert("Mohon lengkapi semua data!");
       return;
     }
-
     const token = localStorage.getItem('auth_token');
-
     try {
       const response = await fetch(`${PUBLIC_API_URL}/penilaian`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           nama: inputNama,
           no_induk: inputNoInduk,
           tahun_ajaran: inputTahun,
+          semester: inputSemester,
           tingkat: tingkat 
         })
       });
@@ -328,6 +363,8 @@
   let editId = null;
   let editNama = "";
   let editNoInduk = "";
+  let editTahun = "";
+  let editSemester = "Ganjil";
 
   let isEditing = false;
 
@@ -335,6 +372,8 @@
     editId = item.id;
     editNama = item.nama;
     editNoInduk = item.noInduk;
+    editTahun = item.tahun_ajaran;
+    editSemester = item.semester || "Ganjil";
     showEditModal = true;
   }
 
@@ -343,21 +382,20 @@
     editId = null;
     editNama = "";
     editNoInduk = "";
-    let isEditing = false;
+    editTahun = "";
+    editSemester = "Ganjil";
+    isEditing = false;
   }
 
-  async function handleEditPenilaian() {
-    // let isEditing = false;
-
-    if (!editNama || !editNoInduk) {
-      alert("Nama dan Nomor Induk Siswa harus diisi!");
+  async function handleEdit() {
+    if(!editNama || !editNoInduk || !editTahun || !editSemester) {
+      alert("Mohon lengkapi semua data!");
       return;
     }
 
     isEditing = true;
 
     const token = localStorage.getItem('auth_token');
-
 
     try {
       // Asumsi endpoint update Laravel menggunakan method PUT
@@ -371,7 +409,8 @@
         body: JSON.stringify({
           nama: editNama,
           no_induk: editNoInduk,
-          tahun_ajaran: inputTahun,
+          tahun_ajaran: editTahun,
+          semester: editSemester,
           tingkat: tingkat 
         })
       });
@@ -382,7 +421,7 @@
         // Update data di tabel secara lokal tanpa perlu refresh halaman
         data = data.map(row => {
           if (row.id === editId) {
-            return { ...row, nama: editNama, noInduk: editNoInduk };
+            return { ...row, nama: editNama, noInduk: editNoInduk, tahun_ajaran: editTahun, semester: editSemester };
           }
           return row;
         });
@@ -393,7 +432,7 @@
     } catch (error) {
       alert("Gagal menghubungi server.");
     } finally{
-      isEditing = true;
+      isEditing = false;
     }
   }
 </script>
@@ -407,6 +446,15 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
           Tambah Penilaian
         </button>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <span class="font-bold text-gray-600 hidden sm:block">Semester</span>
+          <select bind:value={selectedSemesterFilter} class="border-2 border-[#2da76b] text-[#2da76b] px-4 py-2.5 rounded-xl font-bold bg-white focus:outline-none focus:ring-2 focus:ring-green-200 transition-all appearance-none cursor-pointer pr-10">
+            <option value="all">Semua Semester</option>
+            <option value="Ganjil">Ganjil</option>
+            <option value="Genap">Genap</option>
+          </select>
+        </div>
 
         <div class="flex items-center gap-3 w-full sm:w-auto">
           <span class="font-bold text-gray-600 hidden sm:block">Kelas</span>
@@ -432,6 +480,7 @@
             <th class="px-6 py-4 font-semibold text-sm">Nama</th>
             <th class="px-6 py-4 font-semibold text-sm">No. Induk</th>
             <th class="px-6 py-4 font-semibold text-sm">Kelas</th>
+            <th class="px-6 py-4 font-semibold text-sm">Semester</th>
             <th class="px-6 py-4 font-semibold text-sm">Status</th>
             <th class="px-6 py-4 font-semibold text-sm text-right">Aksi</th>
           </tr>
@@ -439,7 +488,7 @@
         <tbody>
           {#if isLoading}
             <tr>
-              <td colspan="5" class="px-6 py-8 text-center text-gray-500 font-medium">
+              <td colspan="6" class="px-6 py-8 text-center text-gray-500 font-medium">
                 <div class="flex items-center justify-center gap-3">
                   <svg class="animate-spin h-6 w-6 text-[#2da76b]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                   Memuat data...
@@ -452,6 +501,7 @@
                 <td class="px-6 py-4 font-medium text-gray-700">{row.nama}</td>
                 <td class="px-6 py-4 text-gray-600">{row.noInduk}</td>
                 <td class="px-6 py-4 text-gray-600">{row.kelas} ({row.tahun_ajaran})</td>
+                <td class="px-6 py-4 text-gray-600 font-semibold">{row.semester || '-'}</td>
                 <td class="px-6 py-4">
                   <span class="px-4 py-1.5 rounded-full text-sm font-bold {row.status === 'Selesai' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">{row.status}</span>
                 </td>
@@ -468,7 +518,7 @@
             {/each}
             {#if displayedData.length === 0}
               <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-gray-400 font-medium">Tidak ada data ditemukan.</td>
+                <td colspan="6" class="px-6 py-8 text-center text-gray-400 font-medium">Tidak ada data ditemukan.</td>
               </tr>
             {/if}
           {/if}
@@ -484,20 +534,43 @@
     <div class="bg-white w-full max-w-lg rounded-[30px] p-8 md:p-10 relative shadow-2xl flex flex-col gap-6 z-10 animate-in fade-in zoom-in-95 duration-200">
       <h2 class="text-3xl font-bold text-gray-600 text-center mb-2">Tambah Penilaian</h2>
       <div class="flex flex-col gap-5">
-        <div>
-          <label class="text-gray-600 font-semibold mb-2 block ml-1" for="nama">Nama Siswa</label>
-          <input type="text" id="nama" bind:value={inputNama} placeholder="Masukkan Nama Siswa" class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none focus:ring-2 focus:ring-[#2da76b] text-gray-800 placeholder:text-gray-500 font-medium"/>
-        </div>
+          <div class="relative">
+            <label class="text-gray-600 font-semibold mb-2 block ml-1" for="nama">Nama Siswa</label>
+            <input type="text" id="nama" autocomplete="off" bind:value={inputNama} on:focus={() => showDropdown = true} on:input={() => showDropdown = true} placeholder="Cari & Pilih Nama Siswa..." class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none focus:ring-2 focus:ring-[#2da76b] text-gray-800 placeholder:text-gray-500 font-medium relative z-50"/>
+            
+            {#if showDropdown}
+              <div class="fixed inset-0 z-40" on:click={() => showDropdown = false}></div>
+              <ul class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar overflow-hidden">
+                {#if filteredSiswa.length > 0}
+                  {#each filteredSiswa as siswa}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <li class="px-5 py-3 hover:bg-green-50 cursor-pointer transition-colors text-gray-700 font-medium border-b border-gray-50 last:border-0" on:click={() => selectSiswa(siswa)}>
+                      {siswa.nama} <span class="text-gray-400 text-sm ml-1">({siswa.nomor_induk} - {siswa.kelas ? siswa.kelas.nama_kelas : 'Belum Ada Kelas'})</span>
+                    </li>
+                  {/each}
+                {:else}
+                  <li class="px-5 py-3 text-gray-400 font-medium text-center">Siswa tidak ditemukan</li>
+                {/if}
+              </ul>
+            {/if}
+          </div>
         <div>
           <label class="text-gray-600 font-semibold mb-2 block ml-1" for="noInduk">Nomor Induk Siswa</label>
           <input type="text" id="noInduk" bind:value={inputNoInduk} placeholder="Masukkan Nomor Induk Siswa" class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none focus:ring-2 focus:ring-[#2da76b] text-gray-800 placeholder:text-gray-500 font-medium"/>
         </div>
         <div>
-          <label class="text-gray-600 font-semibold mb-2 block ml-1" for="tahun">Tahun Pelajaran</label>
-          <input type="text" id="tahun" bind:value={inputTahun} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none text-gray-800 font-medium opacity-80" readonly/>
+          <label class="text-gray-600 font-semibold mb-2 block ml-1" for="inputTahun">Tahun Pelajaran (Berdasarkan Kelas)</label>
+          <input type="text" id="inputTahun" bind:value={inputTahun} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none text-gray-800 font-medium opacity-80 cursor-not-allowed" readonly disabled/>
+        </div>
+        <div>
+          <label class="text-gray-600 font-semibold mb-2 block ml-1" for="inputSemester">Semester</label>
+          <select id="inputSemester" bind:value={inputSemester} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none text-gray-800 font-medium focus:ring-2 focus:ring-[#2da76b] transition-all cursor-pointer">
+            <option value="Ganjil">Ganjil</option>
+            <option value="Genap">Genap</option>
+          </select>
         </div>
       </div>
-      <button on:click={handleTambahPenilaian} class="w-full py-4 mt-4 bg-[#2da76b] text-white rounded-2xl font-bold text-lg hover:bg-[#289562] transition-colors shadow-sm">Tambah Penilaian</button>
+      <button on:click={handleSubmit} class="w-full py-4 mt-4 bg-[#2da76b] text-white rounded-2xl font-bold text-lg hover:bg-[#289562] transition-colors shadow-sm">Tambah Penilaian</button>
       <button on:click={closeModal} class="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors bg-gray-100 p-2 rounded-full">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
@@ -568,11 +641,18 @@
         </div>
         <div>
           <label class="text-gray-600 font-semibold mb-2 block ml-1" for="editTahun">Tahun Pelajaran</label>
-          <input type="text" id="editTahun" bind:value={inputTahun} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none text-gray-800 font-medium" />
+          <input type="text" id="editTahun" bind:value={editTahun} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none text-gray-800 font-medium" />
+        </div>
+        <div>
+          <label class="text-gray-600 font-semibold mb-2 block ml-1" for="editSemester">Semester</label>
+          <select id="editSemester" bind:value={editSemester} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none text-gray-800 font-medium focus:ring-2 focus:ring-[#2da76b] transition-all cursor-pointer">
+            <option value="Ganjil">Ganjil</option>
+            <option value="Genap">Genap</option>
+          </select>
         </div>
       </div>
       <button 
-        on:click={handleEditPenilaian} 
+        on:click={handleEdit} 
         disabled={isEditing}
         class="w-full py-4 mt-4 bg-amber-500 text-white rounded-2xl font-bold text-lg transition-colors shadow-sm flex items-center justify-center gap-2 {isEditing ? 'opacity-70 cursor-not-allowed' : 'hover:bg-amber-600'}"
       >

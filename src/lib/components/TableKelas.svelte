@@ -55,7 +55,6 @@
   // Form State
   let formNamaKelas = "";
   let formTahunAjaran = "";
-  let formSemester = "Ganjil";
   let formGuruId = "";
 
   let isProcessing = false;
@@ -63,7 +62,6 @@
   function resetForm() {
     formNamaKelas = ""; 
     formTahunAjaran = ""; 
-    formSemester = "Ganjil"; 
     formGuruId = "";
   }
 
@@ -77,7 +75,6 @@
     activeItem = item;
     formNamaKelas = item.nama_kelas; 
     formTahunAjaran = item.tahun_ajaran; 
-    formSemester = item.semester;
     formGuruId = item.guru_id || "";
     isEditMode = true;
     showModal = true;
@@ -97,7 +94,7 @@
 
   // --- API HANDLERS ---
   async function handleSimpanKelas() {
-    if (!formNamaKelas || !formTahunAjaran || !formSemester) {
+    if (!formNamaKelas || !formTahunAjaran) {
       alert("Semua kolom wajib diisi kecuali Wali Kelas!"); return;
     }
     
@@ -110,7 +107,6 @@
         tingkat: tingkat,
         nama_kelas: formNamaKelas,
         tahun_ajaran: formTahunAjaran,
-        semester: formSemester,
         guru_id: formGuruId || null
     };
 
@@ -190,9 +186,6 @@
           <th class="px-6 py-4 font-semibold text-sm cursor-pointer hover:bg-[#289562] transition-colors select-none group" on:click={() => handleSort('tahun_ajaran')}>
             <div class="flex items-center gap-2">Tahun Ajaran <span class="text-[10px] opacity-50 group-hover:opacity-100 transition-opacity">↑↓</span></div>
           </th>
-          <th class="px-6 py-4 font-semibold text-sm cursor-pointer hover:bg-[#289562] transition-colors select-none group" on:click={() => handleSort('semester')}>
-            <div class="flex items-center gap-2">Semester <span class="text-[10px] opacity-50 group-hover:opacity-100 transition-opacity">↑↓</span></div>
-          </th>
           <th class="px-6 py-4 font-semibold text-sm cursor-pointer hover:bg-[#289562] transition-colors select-none group" on:click={() => handleSort('wali_kelas')}>
             <div class="flex items-center gap-2">Wali Kelas <span class="text-[10px] opacity-50 group-hover:opacity-100 transition-opacity">↑↓</span></div>
           </th>
@@ -214,7 +207,6 @@
             <tr class="odd:bg-white even:bg-gray-50 hover:bg-green-50/50 transition-colors">
               <td class="px-6 py-4 font-bold text-gray-700">{row.nama_kelas}</td>
               <td class="px-6 py-4 text-gray-600">{row.tahun_ajaran}</td>
-              <td class="px-6 py-4 text-gray-600">{row.semester}</td>
               <td class="px-6 py-4 font-medium text-[#2da76b]">{row.wali_kelas ? row.wali_kelas.nama : '-'}</td>
               <td class="px-6 py-4 flex items-center justify-center gap-2">
                 <button class="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-sm transition-colors" on:click={() => openEditModal(row)}>
@@ -228,7 +220,7 @@
           {/each}
           {#if displayedData.length === 0}
             <tr>
-              <td colspan="5" class="px-6 py-8 text-center text-gray-400 font-medium">Tidak ada data kelas ditemukan.</td>
+              <td colspan="4" class="px-6 py-8 text-center text-gray-400 font-medium">Tidak ada data kelas ditemukan.</td>
             </tr>
           {/if}
         {/if}
@@ -261,14 +253,6 @@
           <div>
             <label class="text-gray-600 font-semibold mb-2 block ml-1">Tahun Ajaran</label>
             <input type="text" bind:value={formTahunAjaran} placeholder="Misal: 2025-2026" class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none focus:ring-2 focus:ring-[#2da76b] text-gray-800 placeholder:text-gray-500 font-medium transition-all"/>
-          </div>
-
-          <div>
-            <label class="text-gray-600 font-semibold mb-2 block ml-1">Semester</label>
-            <select bind:value={formSemester} class="w-full px-5 py-4 rounded-2xl bg-gray-100 border-none outline-none focus:ring-2 focus:ring-[#2da76b] text-gray-800 font-medium transition-all appearance-none">
-              <option value="Ganjil">Ganjil</option>
-              <option value="Genap">Genap</option>
-            </select>
           </div>
 
           <div>
