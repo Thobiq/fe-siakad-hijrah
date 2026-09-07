@@ -315,6 +315,7 @@
   function selectSiswa(siswa) {
     inputNama = siswa.nama;
     inputNoInduk = siswa.nomor_induk;
+    inputTahun = siswa.kelas ? siswa.kelas.tahun_ajaran : "";
     showDropdown = false;
   }
 
