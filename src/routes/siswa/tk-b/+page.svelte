@@ -42,6 +42,10 @@
           ttl: item.ttl,
           alamat: item.alamat,
           namaIbu: item.nama_ibu,
+          nama_ayah: item.nama_ayah,
+          pekerjaan_ayah: item.pekerjaan_ayah,
+          pekerjaan_ibu: item.pekerjaan_ibu,
+          anak_ke: item.anak_ke,
           status: item.status,
           kelas_id: item.kelas_id,
           kelas: item.kelas
