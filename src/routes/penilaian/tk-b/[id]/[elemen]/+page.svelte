@@ -909,7 +909,7 @@
         on:click={() => showSuccessModal = false} 
         class="w-full py-3.5 bg-[#2da76b] hover:bg-[#289562] text-white rounded-2xl font-bold text-base transition-colors shadow-sm cursor-pointer"
       >
-        Oke, Mengerti
+        Oke
       </button>
     </div>
   </div>
