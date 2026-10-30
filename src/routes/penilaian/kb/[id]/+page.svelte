@@ -86,7 +86,7 @@
             if (!currentTp) { currentTp = { teksTP: tp.deskripsi, atp: [] }; currentCp.tujuan.push(currentTp); }
             currentTp.atp.push({
               teksATP: atp.deskripsi,
-              pertemuan: savedMatch.pertemuan || Array(16).fill('')
+              pertemuan: Array.from({ length: 20 }, (_, i) => savedMatch.pertemuan?.[i] ?? '')
             });
           }
         });
@@ -121,17 +121,17 @@
         ["RANGKUMAN PENILAIAN"],
         ["NAMA", studentName],
         ["ELEMEN CAPAIAN", elemen.nama_elemen],
-        ["CAPAIAN PEMBELAJARAN", "TUJUAN PEMBELAJARAN", "ATP/Indikator (Utama)", "PERTEMUAN", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "NILAI AKHIR"], 
-        ["", "", "", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", ""]
+        ["CAPAIAN PEMBELAJARAN", "TUJUAN PEMBELAJARAN", "ATP/Indikator (Utama)", "PERTEMUAN", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "NILAI AKHIR"],
+        ["", "", "", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", ""]
       ];
 
       let merges = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 19 } },
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 23 } },
         { s: { r: 3, c: 0 }, e: { r: 4, c: 0 } },
         { s: { r: 3, c: 1 }, e: { r: 4, c: 1 } },
         { s: { r: 3, c: 2 }, e: { r: 4, c: 2 } },
-        { s: { r: 3, c: 3 }, e: { r: 3, c: 18 } },
-        { s: { r: 3, c: 19 }, e: { r: 4, c: 19 } }
+        { s: { r: 3, c: 3 }, e: { r: 3, c: 22 } },
+        { s: { r: 3, c: 23 }, e: { r: 4, c: 23 } }
       ];
 
       let currentRow = 5;
@@ -158,7 +158,7 @@
       // 2. Jadikan Sheet Baru
       const worksheet = XLSX.utils.aoa_to_sheet(aoa);
       worksheet['!merges'] = merges;
-      worksheet['!cols'] = [{ wch: 35 }, { wch: 35 }, { wch: 45 }, ...Array(16).fill({ wch: 4 }), { wch: 12 }];
+      worksheet['!cols'] = [{ wch: 35 }, { wch: 35 }, { wch: 45 }, ...Array(20).fill({ wch: 4 }), { wch: 12 }];
 
       // Potong nama elemen jika kepanjangan (aturan Excel max 31 karakter)
       let sheetName = elemen.nama_elemen.substring(0, 30).replace(/[:\\\/?*\[\]]/g, '');
@@ -223,7 +223,7 @@
               if (isFirstCpRow) { row.push({ content: cp.teksCP, rowSpan: cpRowCount, styles: { valign: 'middle' } }); isFirstCpRow = false; }
               if (isFirstTpRow) { row.push({ content: tp.teksTP, rowSpan: tpRowCount, styles: { valign: 'middle' } }); isFirstTpRow = false; }
               row.push({ content: atp.teksATP, styles: { valign: 'middle' } });
-              for (let i = 0; i < 16; i++) { row.push({ content: atp.pertemuan[i] || '', styles: { halign: 'center', valign: 'middle' } }); }
+              for (let i = 0; i < 20; i++) { row.push({ content: atp.pertemuan[i] || '', styles: { halign: 'center', valign: 'middle' } }); }
               row.push({ content: getNilaiAkhir(atp.pertemuan), styles: { halign: 'center', valign: 'middle', fontStyle: 'bold', textColor: [45, 167, 107] } });
               rows.push(row);
             }
@@ -231,14 +231,14 @@
         });
       });
 
-      const columns = ["Capaian Pembelajaran", "Tujuan Pembelajaran", "ATP/Indikator", "1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16", "NA"];
+      const columns = ["Capaian Pembelajaran", "Tujuan Pembelajaran", "ATP/Indikator", "1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20", "NA"];
 
       autoTable(doc, {
         head: [columns],
         body: rows,
         startY: 90,
         theme: 'grid',
-        styles: { fontSize: 7, cellPadding: 4, lineColor: [220, 220, 220], lineWidth: 0.5 },
+        styles: { fontSize: 7, cellPadding: 3, lineColor: [220, 220, 220], lineWidth: 0.5 },
         headStyles: { fillColor: [45, 167, 107], textColor: 255, halign: 'center', valign: 'middle' },
         columnStyles: { 0: { cellWidth: 120 }, 1: { cellWidth: 120 }, 2: { cellWidth: 120 } }
       });

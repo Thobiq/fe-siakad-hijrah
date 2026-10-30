@@ -68,7 +68,7 @@
       return [{
         id: crypto.randomUUID(), teksCP: "", 
         tujuan: [{ id: crypto.randomUUID(), teksTP: "", 
-          atp: [{ id: crypto.randomUUID(), teksATP: "", pertemuan: Array(16).fill('') }] 
+          atp: [{ id: crypto.randomUUID(), teksATP: "", pertemuan: Array(20).fill('') }] 
         }]
       }];
     }
@@ -95,7 +95,7 @@
               id: crypto.randomUUID(),
               db_id: atp.id,
               teksATP: atp.deskripsi,
-              pertemuan: savedMatch.pertemuan || Array(16).fill('')
+              pertemuan: Array.from({ length: 20 }, (_, i) => savedMatch.pertemuan?.[i] ?? '')
             });
           }
         });
@@ -115,7 +115,7 @@
               id: crypto.randomUUID(),
               db_id: null, // Karena custom
               teksATP: custom.deskripsi_custom,
-              pertemuan: custom.pertemuan || Array(16).fill('')
+              pertemuan: Array.from({ length: 20 }, (_, i) => custom.pertemuan?.[i] ?? '')
             });
         });
       });
@@ -139,6 +139,10 @@
   let modalTitle = "";
   let currentOpsi = [];
   let targetAction = { type: '', cpIdx: 0, tpIdx: 0, atpIdx: 0 };
+
+  // --- MODAL SUKSES SIMPAN PENILAIAN ---
+  let showSuccessModal = false;
+  let successMessage = "";
 
   function openModal(type, cpIdx, tpIdx = 0, atpIdx = 0) {
     if (!masterDataElemen) {
@@ -219,7 +223,7 @@
     showContextMenu = null;
   };
   const addAtp = (ci, ti) => {
-    dataPenilaian[ci].tujuan[ti].atp = [...dataPenilaian[ci].tujuan[ti].atp, { id: crypto.randomUUID(), teksATP: "", pertemuan: Array(16).fill('') }];
+    dataPenilaian[ci].tujuan[ti].atp = [...dataPenilaian[ci].tujuan[ti].atp, { id: crypto.randomUUID(), teksATP: "", pertemuan: Array(20).fill('') }];
     showContextMenu = null;
   };
 
@@ -323,7 +327,8 @@
       });
       const result = await response.json();
       if (result.status) {
-        alert("Yeay! " + result.message);
+        successMessage = result.message || "Penilaian berhasil disimpan!";
+        showSuccessModal = true;
         isEditMode = false;
       }
     } catch (error) {
@@ -362,7 +367,7 @@
         dataPenilaian = [{
           id: crypto.randomUUID(), teksCP: "", 
           tujuan: [{ id: crypto.randomUUID(), teksTP: "", 
-            atp: [{ id: crypto.randomUUID(), teksATP: "", pertemuan: Array(16).fill('') }] 
+            atp: [{ id: crypto.randomUUID(), teksATP: "", pertemuan: Array(20).fill('') }] 
           }]
         }];
         
@@ -388,19 +393,19 @@
       ["NAMA", studentName],   // Baris 2 (Index 1)
       ["ELEMEN CAPAIAN", namaElemen], // Baris 3 (Index 2)
       // Baris 4 (Index 3) - Header Tabel Atas
-      ["CAPAIAN PEMBELAJARAN", "TUJUAN PEMBELAJARAN", "ATP/Indikator (Utama)", "PERTEMUAN", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "NILAI AKHIR"], 
+      ["CAPAIAN PEMBELAJARAN", "TUJUAN PEMBELAJARAN", "ATP/Indikator (Utama)", "PERTEMUAN", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "NILAI AKHIR"],
       // Baris 5 (Index 4) - Header Angka Pertemuan
-      ["", "", "", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", ""]
+      ["", "", "", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", ""]
     ];
 
     // 2. Daftarkan Merge Cell untuk Header Atas
     let merges = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 19 } }, // Merge Judul "RANGKUMAN PENILAIAN" (A1:T1)
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 23 } }, // Merge Judul "RANGKUMAN PENILAIAN" (A1:X1)
       { s: { r: 3, c: 0 }, e: { r: 4, c: 0 } }, // Merge Header "CAPAIAN PEMBELAJARAN" atas-bawah
       { s: { r: 3, c: 1 }, e: { r: 4, c: 1 } }, // Merge Header "TUJUAN PEMBELAJARAN" atas-bawah
       { s: { r: 3, c: 2 }, e: { r: 4, c: 2 } }, // Merge Header "ATP/Indikator" atas-bawah
-      { s: { r: 3, c: 3 }, e: { r: 3, c: 18 } }, // Merge Header "PERTEMUAN" menyamping (D4:S4)
-      { s: { r: 3, c: 19 }, e: { r: 4, c: 19 } } // Merge Header "NILAI AKHIR" atas-bawah
+      { s: { r: 3, c: 3 }, e: { r: 3, c: 22 } }, // Merge Header "PERTEMUAN" menyamping (D4:W4)
+      { s: { r: 3, c: 23 }, e: { r: 4, c: 23 } } // Merge Header "NILAI AKHIR" atas-bawah
     ];
 
     let currentRow = 5; // Data siswa mulai ditulis di baris ke-6 (Index 5)
@@ -463,7 +468,7 @@
       { wch: 35 }, // A: CP
       { wch: 35 }, // B: TP
       { wch: 45 }, // C: ATP
-      ...Array(16).fill({ wch: 4 }), // D-S: Pertemuan
+      ...Array(20).fill({ wch: 4 }), // D-S: Pertemuan
       { wch: 12 }  // T: Nilai Akhir
     ];
 
@@ -532,7 +537,7 @@
             row.push({ content: atp.teksATP, styles: { valign: 'middle' } });
 
             // Kolom 4-19: Pertemuan 1-16 (Dibuat rata tengah)
-            for (let i = 0; i < 16; i++) {
+            for (let i = 0; i < 20; i++) {
               row.push({ 
                 content: atp.pertemuan[i] || '', 
                 styles: { halign: 'center', valign: 'middle' } 
@@ -570,7 +575,7 @@
 
     const columns = [
       "Capaian Pembelajaran", "Tujuan Pembelajaran", "ATP/Indikator", 
-      "1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16", "Nilai"
+      "1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20", "Nilai"
     ];
     
     // 3. Render Tabel
@@ -579,7 +584,7 @@
       body: rows,
       startY: 90,
       theme: 'grid', // Memunculkan garis kotak-kotak tabel
-      styles: { fontSize: 7, cellPadding: 4, lineColor: [220, 220, 220], lineWidth: 0.5 },
+      styles: { fontSize: 7, cellPadding: 3, lineColor: [220, 220, 220], lineWidth: 0.5 },
       headStyles: { fillColor: [45, 167, 107], textColor: 255, halign: 'center', valign: 'middle' },
       columnStyles: {
         0: { cellWidth: 120 }, 
@@ -682,17 +687,17 @@
       </div>
 
         <div class="overflow-x-auto border border-[#2da76b] rounded-2xl shadow-sm">
-          <table class="w-full border-collapse text-sm text-gray-700 min-w-[1300px]">
+          <table class="w-full border-collapse text-sm text-gray-700 min-w-[1450px]">
             <thead>
               <tr class="bg-[#2da76b] text-white">
                 <th rowspan="2" class="border border-white/20 p-3 w-[22%]">Capaian Pembelajaran</th>
                 <th rowspan="2" class="border border-white/20 p-3 w-[22%]">Tujuan Pembelajaran</th>
                 <th rowspan="2" class="border border-white/20 p-3 w-[22%]">ATP/Indikator</th>
-                <th colspan="16" class="border border-white/20 p-2 text-center">Pertemuan</th>
+                <th colspan="20" class="border border-white/20 p-2 text-center">Pertemuan</th>
                 <th rowspan="2" class="border border-white/20 p-3 text-center w-[60px]">Nilai Akhir</th>
               </tr>
               <tr class="bg-[#2da76b] text-white text-[10px]">
-                {#each Array(16) as _, i}
+                {#each Array(20) as _, i}
                   <th class="border border-white/20 p-1 text-center w-[25px]">{i + 1}</th>
                 {/each}
               </tr>
@@ -700,7 +705,7 @@
             <tbody>
               {#each (isEditMode ? dataPenilaian : displayedData) as cp, cpIndex}
                 {#each cp.tujuan.length > 0 ? cp.tujuan : [{id: 'empty-tp', teksTP: '', atp: []}] as tp, tpIndex}
-                  {#each tp.atp.length > 0 ? tp.atp : [{id: 'empty-atp', teksATP: '', pertemuan: Array(16).fill('')}] as atp, atpIndex}
+                  {#each tp.atp.length > 0 ? tp.atp : [{id: 'empty-atp', teksATP: '', pertemuan: Array(20).fill('')}] as atp, atpIndex}
                     <tr>
                       {#if tpIndex === 0 && atpIndex === 0}
                         <td rowspan={getCpRowspan(cp)} class="border border-gray-200 p-4 align-top relative bg-white group">
@@ -801,7 +806,7 @@
                       <td class="border border-gray-200 p-2 text-center">
                         <button on:click={() => addAtp(cpIndex, tpIndex)} class="px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-[10px]">+ Tambah</button>
                       </td>
-                      {#each Array(17) as _}<td class="border border-gray-200"></td>{/each}
+                      {#each Array(21) as _}<td class="border border-gray-200"></td>{/each}
                     </tr>
                   {/if}
                 {/each}
@@ -811,7 +816,7 @@
                     <td class="border border-gray-200 p-2 text-center">
                       <button on:click={() => addTp(cpIndex)} class="px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-[10px]">+ Tambah</button>
                     </td>
-                    <td class="border border-gray-200"></td> {#each Array(17) as _}<td class="border border-gray-200"></td>{/each}
+                    <td class="border border-gray-200"></td> {#each Array(21) as _}<td class="border border-gray-200"></td>{/each}
                   </tr>
                 {/if}
               {/each}
@@ -821,7 +826,7 @@
                   <td class="border border-gray-200 p-3 text-center">
                     <button on:click={addCp} class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs">+ Tambah</button>
                   </td>
-                  <td class="border border-gray-200"></td> <td class="border border-gray-200"></td> {#each Array(17) as _}<td class="border border-gray-200"></td>{/each}
+                  <td class="border border-gray-200"></td> <td class="border border-gray-200"></td> {#each Array(21) as _}<td class="border border-gray-200"></td>{/each}
                 </tr>
               {/if}
             </tbody>
@@ -877,6 +882,34 @@
             <button on:click={() => showModal = false} class="w-full py-4 bg-gray-100 text-gray-500 rounded-full font-bold">Batal</button>
           {/if}
       </div>
+    </div>
+  </div>
+{/if}
+
+{#if showSuccessModal}
+  <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" on:click={() => showSuccessModal = false}></div>
+    <div class="bg-white w-full max-w-sm rounded-[32px] p-8 relative shadow-2xl flex flex-col items-center text-center gap-5 z-10 animate-in fade-in zoom-in-95 duration-200">
+      <div class="w-16 h-16 bg-green-100 text-[#2da76b] rounded-full flex items-center justify-center shadow-inner">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <h3 class="text-xl font-bold text-gray-800">Berhasil Disimpan!</h3>
+        <p class="text-sm font-medium text-gray-500 leading-relaxed">
+          {successMessage}
+        </p>
+      </div>
+
+      <button 
+        on:click={() => showSuccessModal = false} 
+        class="w-full py-3.5 bg-[#2da76b] hover:bg-[#289562] text-white rounded-2xl font-bold text-base transition-colors shadow-sm cursor-pointer"
+      >
+        Oke, Mengerti
+      </button>
     </div>
   </div>
 {/if}
